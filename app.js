@@ -117,6 +117,24 @@ var UIController = (function() {
       document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
     },
 
+    // Clear input fields
+    clearFields: function() {
+      var fields, fieldsArr;
+
+      // querySelectorAll returns a list which does not have access to array methods
+      fields = document.querySelectorAll(DOMstrings.inputDescription + ', ' + DOMstrings.inputValue);
+
+      // Convert list to array using the Array constructor
+      fieldsArr = Array.prototype.slice.call(fields);
+
+      // forEach methods has access to current value, index, and array
+      fieldsArr.forEach(function(current, index, array) {
+        current.value = '';
+      });
+
+      fieldsArr[0].focus();
+    },
+
     // Let DOMstrings be publicly available
     getDOMstrings: function() {
       return DOMstrings;
@@ -162,9 +180,12 @@ var controller = (function(budgetCtrl, UICtrl) {
     // 3. Add the new item to the UI
     UICtrl.addListItem(newItem, input.type);
 
-    // 4. Calculate the budgetController
+    // 4. Clear the input fields
+    UICtrl.clearFields();
 
-    // 5. Display the budget on the UI
+    // 5. Calculate the budgetController
+
+    // 6. Display the budget on the UI
 
   };
 
