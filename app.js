@@ -22,7 +22,7 @@ var budgetController = (function() {
 
   Expense.prototype.getPercentage = function() {
     return this.percentage;
-  }
+  };
 
   // Income constructor
   var Income = function(id, description, value) {
@@ -125,6 +125,7 @@ var budgetController = (function() {
     },
 
     getPercentages: function() {
+      // map method creates a new array
       var allPerc = data.allItems.exp.map(function(current) {
         return current.getPercentage();
       });
@@ -168,8 +169,40 @@ var UIController = (function() {
     expensesLabel: '.budget__expenses--value',
     percentageLabel: '.budget__expenses--percentage',
     container: '.container',
-    expensesPercLabel: '.item__percentage'
+    expensesPercLabel: '.item__percentage',
+    dateLabel: '.budget__title--month'
   };
+
+  var formatNumber = function(num, type) {
+    var numSplit, int, dec, type;
+    /*
+      + or - before number
+      exactly 2 decimal points
+      comma seperating the thousandths
+
+      2310.4567 -> + 2,310.46
+      2000 ->  + 2,000.00
+    */
+
+    // Math.abs() removes the sign of the number
+    num = Math.abs(num);
+
+    // toFixed -> always puts 2 decimal numbers
+    num = num.toFixed(2)
+
+    numSplit = num.split('.');
+    int = numSplit[0];
+    dec = numSplit[1];
+
+    // logic for where to add the comma
+    if (int.length > 3) {
+      int = int.substr(0, int.length - 3) + ',' + int.substr(int.length - 3, 3);
+    }
+
+    // Put the formatted number back together
+    return (type === 'exp' ? '-' : '+') + ' ' + int + '.' + dec;
+  };
+
 
   // PUBLIC methods available
   return {
@@ -201,7 +234,7 @@ var UIController = (function() {
       // Replace the placeholder text with some actual data
       newHtml = html.replace('%id%', obj.id);
       newHtml = newHtml.replace('%description%', obj.description);
-      newHtml = newHtml.replace('%value%', obj.value);
+      newHtml = newHtml.replace('%value%', formatNumber(obj.value, type));
 
       // Insert the HTML into the DOM
       document.querySelector(element).insertAdjacentHTML('beforeend', newHtml);
@@ -210,6 +243,7 @@ var UIController = (function() {
     deleteListItem: function(selectorID) {
       var el = document.getElementById(selectorID);
 
+      // Only able to remove a child node so it must be done this way which might look odd
       el.parentNode.removeChild(el);
     },
 
@@ -228,14 +262,18 @@ var UIController = (function() {
         current.value = '';
       });
 
+      // After click or return the focus goes back to the description field
       fieldsArr[0].focus();
     },
 
     displayBudget: function(obj) {
+      var type;
+      obj.budget > 0 ? type = 'inc' : type = 'exp';
+
       // Get DOM elements
-      document.querySelector(DOMstrings.budgetLabel).textContent = obj.budget;
-      document.querySelector(DOMstrings.incomeLabel).textContent = obj.totalInc;
-      document.querySelector(DOMstrings.expensesLabel).textContent = obj.totalExp;
+      document.querySelector(DOMstrings.budgetLabel).textContent = formatNumber(obj.budget, type);
+      document.querySelector(DOMstrings.incomeLabel).textContent = formatNumber(obj.totalInc, 'inc');
+      document.querySelector(DOMstrings.expensesLabel).textContent = formatNumber(obj.totalExp, 'exp');
 
       // Check if percentage > 0
       if (obj.percentage > 0) {
@@ -267,17 +305,16 @@ var UIController = (function() {
       });
     },
 
-    formatNumber: function(num, type) {
-      /*
-        + or - before number
-        exactly 2 decimal points
-        comma seperating the thousandths
+    displayMonth: function() {
+      var now, year, month, months;
 
-        2310.4567 -> + 2,310.46
-        2000 ->  + 2,000.00
-      */
+      now = new Date();
 
-      
+      months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      month = now.getMonth();
+
+      year = now.getFullYear();
+      document.querySelector(DOMstrings.dateLabel).textContent = months[month] + ' ' + year;
     },
 
     // Let DOMstrings be publicly available
@@ -398,13 +435,14 @@ var controller = (function(budgetCtrl, UICtrl) {
     init: function() {
       // Fire up controller event listeners
       setupEventListeners();
-      console.log('App has started.');
+      UICtrl.displayMonth();
       UICtrl.displayBudget({
         budget: 0,
         totalInc: 0,
         totalExp: 0,
         percentage: 0
       });
+      console.log('App has started.');
     }
   };
 })(budgetController, UIController);
